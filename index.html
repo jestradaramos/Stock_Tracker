@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<title> Stock Tracker </title>
+
+<head>
+<script src="https://d3js.org/d3.v4.js"></script>
+
+
+</head>
+
+
+<body>
+	<form class="stocks" >
+		Stock Code: <input type="text" id="code" name="code"> <br>
+		<input type="button" value="search" onclick="retrieveData()">
+	</form>
+
+	<div class='graphs' id='graphs'>
+		<h3> This is where I will have my graphs </h3>
+	</div>
+
+
+<script>
+console.log("I hope I am doing this correctly");
+
+var margin = {top : 20 , right : 20, bottom : 30, left : 50},
+	width = 960 - margin.left - margin.right,
+	height = 500 - margin.top - margin.bottom;
+
+var parseTime = d3.timeParse("%Y-%m-%d");
+var x = d3.scaleTime().range([0, width]);
+var y = d3.scaleLinear().range([height, 0]);
+
+var valueline = d3.line()
+				.x(function(d){ return x(d.Date); })
+				.y(function(d) { return y(d.Value);});
+
+
+
+var svg = d3.select("body").append("svg")
+	.attr("width", width + margin.left + margin.right)
+	.attr("height", height + margin.top + margin.bottom)
+	.append("g")
+	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+function draw(data){
+
+	var myData = [];
+
+	for (var k in data) {
+		//console.log(k , myData[k]);
+		//console.log(k);
+		var val = (data[k]["2. high"]);
+		//console.log(val);
+		l = parseTime(k);
+		var obj = {
+					"Date" : l,
+					"Value" : +val
+				};
+		myData.push(obj);
+		//myData[k]["2. high"] = +myData[k]["2. high"];
+	}
+
+	console.log(myData);
+	// Scale the range of the data
+	x.domain(d3.extent(myData, function(d) { return d.Date;}));
+	var max = d3.max(myData, function(d) { return d.Value;});
+	console.log(max);
+	y.domain(d3.extent(myData, function(d) { return d.Value;}));
+	//y.domain([0, max]); 
+	
+	svg.append("path")
+      .data([myData])
+	  .attr("class", "line")
+	  .attr("d", valueline)
+	  .attr("fill", "transparent")
+	  .attr("stroke", "black");
+
+	// Add the X Axis
+	svg.append("g")
+		.attr("transform", "translate(0," + height + ")")
+		.call(d3.axisBottom(x));
+
+	// Add the Y Axis
+	svg.append("g")
+		.call(d3.axisLeft(y));
+}
+
+
+
+
+function retrieveData() {
+	var function_name = 'TIME_SERIES_DAILY';
+	var symbol = document.getElementById('code').value;
+	var key = '8X2BA690DZRAXIJK';
+	var req = 'https://www.alphavantage.co/query?function=' + 
+				function_name + '&symbol=' +symbol + '&apikey=' + key;
+	console.log(req); 
+	fetch(req).then(function(response) {
+		return response.json();
+	}). then (function(data) {
+		ourJson = data['Time Series (Daily)'];
+		//console.log(ourJson);
+		// Is here where I fucks with the data? And it will be in the variable data?
+
+		draw(ourJson);
+	});
+}
+
+
+
+</script>
+</body>
+</html>
